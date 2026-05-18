@@ -14,6 +14,30 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 		<main>
 			<h1>POLISAT</h1>
 
+
+			<div class="timer">
+				<svg viewBox="0 0 300 300" class="timer-circle">
+					<defs>
+						<!-- Define the gradient here -->
+						<linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+							<stop offset="0%" stop-color="red" />   <!-- Start color (Cyan) -->
+							<stop offset="100%" stop-color="blue" /> <!-- End color (Blue) -->
+						</linearGradient>
+					</defs>
+	
+					<!-- Background Track -->
+					<circle cx="150" cy="150" r="142.5" stroke="#eee" stroke-width="15" fill="none" />
+					
+					<!-- Animated Fill pointing to the gradient ID -->
+					<circle class="progress-ring" cx="150" cy="150" r="142.5" stroke="url(#progress-gradient)" stroke-width="15" fill="none" />
+				</svg>
+
+				<div class="timer-content">
+					<span id="counter-days"></span> dias <span id="counter-hours"></span>h <span id="counter-minutes"></span>m <span id="counter-seconds"></span>s
+				</div>
+			</div>
+
+
 			<h3>Conheça nossos subsistemas</h3>
 
 			<section class="conteudo">
@@ -37,9 +61,81 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 					<p>O coração elétrico do satélite. O EPS gerencia a geração de energia através de painéis solares, o armazenamento em baterias e a distribuição precisa de voltagem para que nenhum componente fique sem "combustível" durante o eclipse na órbita terrestre.</p>
 				</div>
 			</section>
+
+			<canvas width="600" height="300">Animação satélite</canvas>
 		</main>
 	</body>
 </html>
+
+<script>
+	// @ts-nocheck
+
+	const svg = document.querySelector(".timer svg")
+	const circles = document.querySelectorAll(".timer svg circle")
+	const ring = circles[1]
+	let circumference, radius = 0
+
+	// maxWidth, strokeWidth: properties of the timer in pixels
+	function setTimer(maxWidth, strokeWidth) {
+
+		radius = (maxWidth / 2) - (strokeWidth / 2)
+		circumference = 2 * Math.PI * radius
+
+		// Set up the initial circle state
+		svg?.setAttribute('viewBox', `0 0 ${maxWidth} ${maxWidth}`)
+
+		// Set up the initial circle state
+		circles.forEach((circle) => {
+			circle.setAttribute('cx', maxWidth / 2)
+			circle.setAttribute('cy', maxWidth / 2)
+			circle.setAttribute('stroke-width', strokeWidth)
+			circle.setAttribute('r', radius)
+
+		})
+
+		ring.style.strokeDasharray = `${circumference}`;
+		ring.style.strokeDashoffset = `${circumference}`;
+		ring.style.transformOrigin = `${maxWidth / 2}px ${maxWidth / 2}px`
+	}
+
+	// Percent should be a value between 0 and 1
+	function setProgress(percent) {
+		const offset = circumference - percent * circumference;
+		ring.style.strokeDashoffset = offset;
+	}
+
+	function updateTimer() {
+		const start = (new Date(2026, 5, 0, 0)).valueOf();
+		const final = (new Date(2026, 5, 4, 0)).valueOf();
+
+		const now = (new Date()).valueOf()
+		const timeDiff = final - now
+
+		let days = timeDiff / (24 * 60 * 60 * 1000)
+		let hours = (days - Math.trunc(days)) * (24)
+		let minutes = (hours - Math.trunc(hours)) * 60
+		let seconds = (minutes - Math.trunc(minutes)) * 60
+		
+		// Format the numbers to be two digit integers
+		let fDays = Math.trunc(days).toString().padStart(2, '0')
+		let fHours = Math.trunc(hours).toString().padStart(2, '0')
+		let fMinutes = Math.trunc(minutes).toString().padStart(2, '0')
+		let fSeconds = Math.trunc(seconds).toString().padStart(2, '0')
+
+		document.querySelector("#counter-days").textContent = fDays;
+		document.querySelector("#counter-hours").textContent = fHours;
+		document.querySelector("#counter-minutes").textContent = fMinutes;
+		document.querySelector("#counter-seconds").textContent = fSeconds;
+
+		const totalDuration = final - start
+		const progressRation = 1 - (timeDiff / totalDuration)
+		setProgress(progressRation)
+	}
+
+	setTimer(400, 20)
+	updateTimer()
+	setInterval(updateTimer, 1000)
+</script>
 
 <style>
 	h1 {
@@ -72,5 +168,40 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 		flex-direction: column;
 		gap: 1.5rem;
 		margin-top: 1rem;
+	}
+
+	/* Timer */
+	.timer {
+		display: grid;
+		place-items: center;
+		position: relative;
+		max-width: 400px;
+		height: 400px;
+		margin: 0 auto;
+	}
+
+	.timer-content {
+		font-weight: bold;
+		font-size: 1.75rem;
+	}
+
+	.timer-circle {
+		width: 100%;             /* Fills the width of whatever container it sits in */
+		height: auto;            /* Maintains the perfect 1:1 aspect ratio automatically */
+		display: block;
+		margin: 0 auto;          /* Centers the container horizontally */
+		position: absolute;
+	}
+
+	.progress-ring {
+		/* Circumference: 2 * Math.PI * radius */
+		/* stroke-dasharray: 895; 
+		stroke-dashoffset: 895;  */
+		
+		/* Rotate exactly around the internal center point */
+		transform: rotate(-90deg);
+		/* transform-origin: 150px 150px;  */
+		
+		stroke-linecap: round; /* Seamless rounded caps */
 	}
 </style>
