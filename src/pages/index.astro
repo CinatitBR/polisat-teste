@@ -1,8 +1,12 @@
 ---
+import { Image } from 'astro:assets';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+import earth from '../assets/earth.png'
+import cubesat from '../assets/cubesat.png'
 ---
 
 <!doctype html>
@@ -16,24 +20,34 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 
 			<div class="timer">
-				<svg viewBox="0 0 300 300" class="timer-circle">
-					<defs>
-						<!-- Define the gradient here -->
-						<linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-							<stop offset="0%" stop-color="red" />   <!-- Start color (Cyan) -->
-							<stop offset="100%" stop-color="blue" /> <!-- End color (Blue) -->
-						</linearGradient>
-					</defs>
-	
-					<!-- Background Track -->
-					<circle cx="150" cy="150" r="142.5" stroke="#eee" stroke-width="15" fill="none" />
+				<header>
+					<div class="timer-title">LASC</div>
 					
-					<!-- Animated Fill pointing to the gradient ID -->
-					<circle class="progress-ring" cx="150" cy="150" r="142.5" stroke="url(#progress-gradient)" stroke-width="15" fill="none" />
-				</svg>
+					<div class="timer-display">
+						<span id="timer-days"></span> dias <span id="timer-hours"></span>h <span id="timer-minutes"></span>m <span id="timer-seconds"></span>s
+					</div>
+				</header>
 
-				<div class="timer-content">
-					<span id="counter-days"></span> dias <span id="counter-hours"></span>h <span id="counter-minutes"></span>m <span id="counter-seconds"></span>s
+				<div class="circle-countdown">
+					<svg viewBox="0 0 300 300" class="timer-circle">
+						<defs>
+							<!-- Define the gradient here -->
+							<linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+								<stop offset="0%" stop-color="white" />   <!-- Start color (Cyan) -->
+								<stop offset="100%" stop-color="white" /> <!-- End color (Blue) -->
+							</linearGradient>
+						</defs>
+		
+						<!-- Background Track -->
+						<circle cx="150" cy="150" r="142.5" stroke-width="15" fill="none" />
+						
+						<!-- Animated Fill pointing to the gradient ID -->
+						<circle class="progress-ring" cx="150" cy="150" r="142.5" stroke="url(#progress-gradient)" stroke-width="15" fill="none" />
+	
+						<image id="progress-icon" href={cubesat.src} width="100" />
+					</svg>
+	
+					<Image class="earth" src={earth} alt="Planet earth" />
 				</div>
 			</div>
 
@@ -70,15 +84,20 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 <script>
 	// @ts-nocheck
 
-	const svg = document.querySelector(".timer svg")
-	const circles = document.querySelectorAll(".timer svg circle")
+	const svg = document.querySelector(".circle-countdown svg")
+	const icon = document.querySelector("#progress-icon")
+	const circles = document.querySelectorAll(".circle-countdown svg circle")
 	const ring = circles[1]
-	let circumference, radius = 0
+
+	const maxWidth = 400
+	const strokeWidth = 7
+
+	let center, circumference, radius = 0
 
 	// maxWidth, strokeWidth: properties of the timer in pixels
-	function setTimer(maxWidth, strokeWidth) {
-
-		radius = (maxWidth / 2) - (strokeWidth / 2)
+	function setTimer() {
+		center = maxWidth / 2
+		radius = center - (strokeWidth / 2)
 		circumference = 2 * Math.PI * radius
 
 		// Set up the initial circle state
@@ -86,8 +105,8 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 		// Set up the initial circle state
 		circles.forEach((circle) => {
-			circle.setAttribute('cx', maxWidth / 2)
-			circle.setAttribute('cy', maxWidth / 2)
+			circle.setAttribute('cx', center)
+			circle.setAttribute('cy', center)
 			circle.setAttribute('stroke-width', strokeWidth)
 			circle.setAttribute('r', radius)
 
@@ -95,20 +114,29 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 		ring.style.strokeDasharray = `${circumference}`;
 		ring.style.strokeDashoffset = `${circumference}`;
-		ring.style.transformOrigin = `${maxWidth / 2}px ${maxWidth / 2}px`
+		ring.style.transformOrigin = `${center}px ${center}px`
 	}
 
 	// Percent should be a value between 0 and 1
 	function setProgress(percent) {
 		const offset = circumference - percent * circumference;
 		ring.style.strokeDashoffset = offset;
+
+		// Convert offset to radians
+		let angle = (percent * 2 * Math.PI) - (Math.PI / 2)
+		
+		const iconX = center + radius * Math.cos(angle)
+		const iconY = center + radius * Math.sin(angle)
+
+		icon?.setAttribute('x', iconX - 50)
+		icon?.setAttribute('y', iconY - 35)
 	}
 
 	function updateTimer() {
-		const start = (new Date(2026, 5, 0, 0)).valueOf();
-		const final = (new Date(2026, 5, 4, 0)).valueOf();
-
+		const start = (new Date(2025, 10, 5, 0)).valueOf();
+		const final = (new Date(2026, 8, 2, 0)).valueOf();
 		const now = (new Date()).valueOf()
+
 		const timeDiff = final - now
 
 		let days = timeDiff / (24 * 60 * 60 * 1000)
@@ -122,17 +150,17 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 		let fMinutes = Math.trunc(minutes).toString().padStart(2, '0')
 		let fSeconds = Math.trunc(seconds).toString().padStart(2, '0')
 
-		document.querySelector("#counter-days").textContent = fDays;
-		document.querySelector("#counter-hours").textContent = fHours;
-		document.querySelector("#counter-minutes").textContent = fMinutes;
-		document.querySelector("#counter-seconds").textContent = fSeconds;
+		document.querySelector("#timer-days").textContent = fDays;
+		document.querySelector("#timer-hours").textContent = fHours;
+		document.querySelector("#timer-minutes").textContent = fMinutes;
+		document.querySelector("#timer-seconds").textContent = fSeconds;
 
 		const totalDuration = final - start
 		const progressRation = 1 - (timeDiff / totalDuration)
 		setProgress(progressRation)
 	}
 
-	setTimer(400, 20)
+	setTimer()
 	updateTimer()
 	setInterval(updateTimer, 1000)
 </script>
@@ -171,7 +199,23 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	}
 
 	/* Timer */
-	.timer {
+	.timer header {
+		width: fit-content;
+		margin: 0 auto;
+		margin-bottom: 1rem;
+	}
+
+	.timer .timer-title {
+		font-size: 1.5rem;
+		width: fit-content;
+		margin: 0 auto;
+	}
+
+	.timer .timer-display {
+		font-size: 1.4rem;
+	}
+
+	.circle-countdown {
 		display: grid;
 		place-items: center;
 		position: relative;
@@ -180,9 +224,16 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 		margin: 0 auto;
 	}
 
-	.timer-content {
+	.earth {
+		position: absolute;
+		z-index: -1;
+		max-width: 87%;
+	}
+
+	.timer-display {
 		font-weight: bold;
 		font-size: 1.75rem;
+		background-color: #19181b;
 	}
 
 	.timer-circle {
@@ -194,14 +245,21 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	}
 
 	.progress-ring {
-		/* Circumference: 2 * Math.PI * radius */
-		/* stroke-dasharray: 895; 
-		stroke-dashoffset: 895;  */
-		
-		/* Rotate exactly around the internal center point */
 		transform: rotate(-90deg);
-		/* transform-origin: 150px 150px;  */
 		
 		stroke-linecap: round; /* Seamless rounded caps */
+	}
+
+	#progress-icon {
+		animation: floating 1.2s alternate infinite ease-in-out;
+	}
+
+	@keyframes floating {
+		0% {
+			transform: rotate(-2deg) translateY(4px);
+		}
+		100% {
+			transform: translateY(-4px);
+		}
 	}
 </style>
