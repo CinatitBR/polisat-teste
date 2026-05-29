@@ -7,16 +7,17 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 import earth from '../assets/earth.png'
 import cubesat from '../assets/cubesat.png'
+import logo from '../assets/logo-polisat.svg'
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} image={logo} />
 	</head>
 	<body>
 		<main>
-			<h1>POLISAT</h1>
+			<Image class="logo" src={logo} alt="Logo do PoliSat" />
 
 			<div class="timer">
 				<header>
@@ -174,6 +175,12 @@ import cubesat from '../assets/cubesat.png'
 </script>
 
 <style>
+	.logo {
+		margin: 40px auto;
+		display: block;
+		max-width: 230px;
+	}
+
 	h1 {
 		/* POLISAT */
 		font-family: 'Monoton';
