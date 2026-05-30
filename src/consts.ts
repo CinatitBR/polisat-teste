@@ -3,4 +3,4 @@
 
 export const SITE_TITLE = "PoliSat";
 export const SITE_DESCRIPTION = "Welcome to my website!";
-export const BASE_URL = "polisat-teste";
+export const BASE_URL = "/polisat-teste";
